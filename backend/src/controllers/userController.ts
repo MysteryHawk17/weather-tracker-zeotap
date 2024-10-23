@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { UserService } from "../services/userService";
+import { Schema } from "mongoose";
 
 export class UserController {
   private userService: UserService;
@@ -9,6 +10,7 @@ export class UserController {
     this.login = this.login.bind(this);
     this.updatePreferences = this.updatePreferences.bind(this);
     this.getProfile = this.getProfile.bind(this);
+    this.getallAlerts = this.getallAlerts.bind(this);
   }
 
   async register(req: Request, res: Response) {
@@ -96,6 +98,20 @@ export class UserController {
       const userProfile = await this.userService.getUserProfile(userId);
 
       res.json(userProfile);
+    } catch (error: any) {
+      res.status(404).json({ message: error.message });
+    }
+  }
+
+  async getallAlerts(req: Request, res: Response) {
+    try {
+      if (!req.user || !req.user._id) {
+        throw new Error("User id required");
+      }
+      const userId = req.user._id as Schema.Types.ObjectId;
+      const alerts = await this.userService.getAllAlerts(userId);
+
+      res.json(alerts);
     } catch (error: any) {
       res.status(404).json({ message: error.message });
     }

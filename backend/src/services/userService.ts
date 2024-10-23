@@ -2,6 +2,7 @@ import { User } from "../models/User";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Schema } from "mongoose";
+import { Notification } from "../models/Notification";
 
 export class UserService {
   async registerUser(data: {
@@ -54,7 +55,7 @@ export class UserService {
     if (notificationSettings.email) {
       user.notificationContact.email = email;
     }
-    
+
     await user.save();
 
     const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET!, {
@@ -144,5 +145,13 @@ export class UserService {
       thresholds: user.thresholds,
       notificationSettings: user.notificationSettings,
     };
+  }
+
+  async getAllAlerts(userId: Schema.Types.ObjectId) {
+    const alerts = await Notification.find({ userId: userId });
+    if (!alerts) {
+      throw new Error("User not found");
+    }
+    return alerts;
   }
 }

@@ -3,6 +3,7 @@ import { IUser, User } from "../models/User";
 import convertTemperature from "../convertTemp";
 import dotenv from "dotenv";
 import { Schema } from "mongoose";
+import { Notification } from "../models/Notification";
 dotenv.config();
 interface EmailNotification {
   userId: string;
@@ -29,7 +30,7 @@ export class TemperatureNotifier {
     try {
       const users: IUser[] = await User.find();
 
-      users.forEach((user) => {
+      users.forEach(async (user) => {
         currentTemperature = convertTemperature(
           user.preferredTemperatureUnit,
           currentTemperature
@@ -46,8 +47,13 @@ export class TemperatureNotifier {
             email: user.notificationContact.email,
             message: `The current temperature is ${currentTemperature}°C, which triggers the threshold.`,
           };
-          console.log("ARE WE HERE?");
           this.pushNotification(notification);
+          const newNotification = new Notification({
+            userId: user.id,
+            message: notification.message,
+            type: "Email",
+          });
+          await newNotification.save();
         }
       });
     } catch (error) {
