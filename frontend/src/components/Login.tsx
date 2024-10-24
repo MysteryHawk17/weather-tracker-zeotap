@@ -22,6 +22,10 @@ export default function Login() {
   };
   const { loginUser } = useWeather();
 
+  const handleGuestLogin = () => {
+    setEmail("raj.yash1217@gmail.com");
+    setPassword("SecurePassword123");
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await loginUser(email, password);
@@ -69,6 +73,13 @@ export default function Login() {
             Log In
           </button>
         </form>
+        <button
+          className="w-full  mt-3 p-3 rounded font-semibold text-white"
+          style={{ backgroundColor: colorScheme.background }}
+          onClick={handleGuestLogin}
+        >
+          Guest User
+        </button>
         <div
           className="flex justify-center gap-3 mt-6"
           style={{ color: colorScheme.textSecondary }}
