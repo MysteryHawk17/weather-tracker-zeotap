@@ -12,7 +12,7 @@ export class WeatherUpdateJob {
 
   start() {
     // Run every 5 minutes
-    cron.schedule("*/1 * * * *", async () => {
+    cron.schedule("*/5 * * * *", async () => {
       try {
         const cities = await City.find();
 

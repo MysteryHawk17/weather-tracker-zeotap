@@ -11,8 +11,17 @@ interface WeatherResponse {
   city: any;
   temperature: number;
   feelsLike: number;
-  weatherCondition: any;
-  timestamp: Date;
+  pressure: number;
+  humidity: number;
+  weatherCondition: Array<{
+    id: number;
+    main: string;
+    description: string;
+    icon: string;
+  }>;
+  windSpeed: number;
+  visibility: number;
+  createdAt: Date;
 }
 
 export class WeatherService {
@@ -56,7 +65,11 @@ export class WeatherService {
       temperature: tempConverted,
       feelsLike: feelsLikeConverted,
       weatherCondition: weatherData.weatherCondition,
-      timestamp: new Date(weatherData.createdAt),
+      windSpeed: weatherData.windSpeed,
+      visibility: weatherData.visibility,
+      pressure: weatherData.pressure,
+      humidity: weatherData.humidity,
+      createdAt: new Date(weatherData.createdAt),
     };
   }
 
@@ -91,50 +104,105 @@ export class WeatherService {
       temperature: tempConverted,
       feelsLike: feelsLikeConverted,
       weatherCondition: weatherData.weatherCondition,
-      timestamp: new Date(weatherData.createdAt),
+      windSpeed: weatherData.windSpeed,
+      visibility: weatherData.visibility,
+      pressure: weatherData.pressure,
+      humidity: weatherData.humidity,
+      createdAt: new Date(weatherData.createdAt),
     };
   }
+
+  // async getDailySummary(cityId: string, userId: Schema.Types.ObjectId) {
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+
+  //   const summary = await DailySummary.findOne({
+  //     city: cityId,
+  //     date: today,
+  //   }).populate("city");
+
+  //   if (!summary) {
+  //     throw new Error("Daily summary not found");
+  //   }
+  //   const user = await User.findById(userId).populate("location");
+  //   if (!user) {
+  //     throw new Error("User not found");
+  //   }
+
+  //   const maxtempConverted = convertTemperature(
+  //     user.preferredTemperatureUnit,
+  //     summary.maxTemperature
+  //   );
+  //   const mintempConverted = convertTemperature(
+  //     user.preferredTemperatureUnit,
+  //     summary.minTemperature
+  //   );
+  //   const avgTempConverted = convertTemperature(
+  //     user.preferredTemperatureUnit,
+  //     summary.averageTemperature
+  //   );
+  //   return {
+  //     city: summary.city,
+  //     date: summary.date,
+  //     averageTemperature: avgTempConverted,
+  //     maxTemperature: maxtempConverted,
+  //     minTemperature: mintempConverted,
+  //     dominantWeatherCondition: summary.dominantWeatherCondition,
+  //     weatherConditionCount: summary.weatherConditionCount,
+  //   };
+  // }
 
   async getDailySummary(cityId: string, userId: Schema.Types.ObjectId) {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const summary = await DailySummary.findOne({
-      city: cityId,
-      date: today,
-    }).populate("city");
+    // Create an array of the last 7 dates
+    const dates = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      return date;
+    });
 
-    if (!summary) {
-      throw new Error("Daily summary not found");
-    }
+    // Get user preferences first to avoid repeated queries
     const user = await User.findById(userId).populate("location");
     if (!user) {
       throw new Error("User not found");
     }
 
-    const maxtempConverted = convertTemperature(
-      user.preferredTemperatureUnit,
-      summary.maxTemperature
-    );
-    const mintempConverted = convertTemperature(
-      user.preferredTemperatureUnit,
-      summary.minTemperature
-    );
-    const avgTempConverted = convertTemperature(
-      user.preferredTemperatureUnit,
-      summary.averageTemperature
-    );
-    return {
+    // Fetch all summaries for the last 7 days
+    const summaries = await DailySummary.find({
+      city: cityId,
+    })
+      .populate("city")
+      .sort({ date: -1 })
+      .limit(7); // Sort by date descending
+
+    // If no summaries found, throw error
+    if (!summaries.length) {
+      throw new Error("No daily summaries found");
+    }
+    // Convert and map the summaries
+    const weeklySummary = summaries.map((summary) => ({
       city: summary.city,
       date: summary.date,
-      averageTemperature: avgTempConverted,
-      maxTemperature: maxtempConverted,
-      minTemperature: mintempConverted,
+      averageTemperature: convertTemperature(
+        user.preferredTemperatureUnit,
+        summary.averageTemperature
+      ),
+      maxTemperature: convertTemperature(
+        user.preferredTemperatureUnit,
+        summary.maxTemperature
+      ),
+      minTemperature: convertTemperature(
+        user.preferredTemperatureUnit,
+        summary.minTemperature
+      ),
       dominantWeatherCondition: summary.dominantWeatherCondition,
       weatherConditionCount: summary.weatherConditionCount,
-    };
-  }
+    }));
 
+    return weeklySummary;
+  }
   async getAllCities() {
     const cities = await City.find();
     return cities;
@@ -156,12 +224,17 @@ export class WeatherService {
         pressure: response.data.main.pressure,
         humidity: response.data.main.humidity,
         weatherCondition: response.data.weather,
+        windSpeed: response.data.wind.speed,
+        visibility: response.data.visibility,
         timestamp: new Date(),
       });
 
       await weatherData.save();
       await this.updateDailySummary(cityId);
-      await this.tempretureNotifier.notifyUsers(weatherData.temperature,cityId);
+      await this.tempretureNotifier.notifyUsers(
+        weatherData.temperature,
+        cityId
+      );
       return weatherData;
     } catch (error) {
       console.log(error);

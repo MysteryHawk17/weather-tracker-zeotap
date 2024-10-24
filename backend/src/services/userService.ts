@@ -17,8 +17,7 @@ export class UserService {
       condition: string;
     };
     notificationSettings: {
-      email: boolean;
-      sms: boolean;
+      email: boolean
     };
   }) {
     const {
@@ -92,7 +91,6 @@ export class UserService {
       preferredTemperatureUnit: string;
       thresholds: object;
       notificationSettings: { emall: boolean; sms: boolean };
-      notificationContact: { email: string; phone: string };
     }
   ) {
     const {
@@ -100,7 +98,6 @@ export class UserService {
       preferredTemperatureUnit,
       thresholds,
       notificationSettings,
-      notificationContact,
     } = data;
     if (
       preferredTemperatureUnit !== "Celsius" &&
@@ -108,26 +105,21 @@ export class UserService {
     ) {
       throw new Error("Invalid temperature unit");
     }
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        location,
-        preferredTemperatureUnit,
-        thresholds,
-        notificationSettings,
-        notificationContact: {
-          email: notificationContact?.email,
-          phone: notificationContact?.phone,
-        },
-        updatedAt: new Date(),
-      },
-      { new: true }
-    );
+    const updatedData = {
+      location,
+      preferredTemperatureUnit,
+      thresholds,
+      notificationSettings,
+      updatedAt: new Date(),
+    };
+    const updatedUser = await User.findByIdAndUpdate(userId, updatedData, {
+      new: true,
+    });
 
     if (!updatedUser) {
       throw new Error("User not found");
     }
-
+    console.log("UPDATED USER", updatedUser);
     return updatedUser;
   }
 

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { UserService } from "../services/userService";
-import { Schema } from "mongoose";
+import mongoose, { Mongoose, Schema, Types } from "mongoose";
 
 export class UserController {
   private userService: UserService;
@@ -24,7 +24,6 @@ export class UserController {
         thresholds,
         notificationSettings,
       } = req.body;
-
       const { userId, token } = await this.userService.registerUser({
         name,
         email,
@@ -41,6 +40,7 @@ export class UserController {
         token,
       });
     } catch (error: any) {
+
       res.status(400).json({ message: error.message });
     }
   }
@@ -67,7 +67,6 @@ export class UserController {
         preferredTemperatureUnit,
         thresholds,
         notificationSettings,
-        notificationContact,
       } = req.body;
       if (!userId) {
         throw new Error("User id required");
@@ -77,7 +76,6 @@ export class UserController {
         preferredTemperatureUnit,
         thresholds,
         notificationSettings,
-        notificationContact,
       });
 
       res.json({

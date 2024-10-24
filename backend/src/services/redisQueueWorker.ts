@@ -15,8 +15,13 @@ export class QueueWorker {
   constructor() {
     this.client = createClient({
       url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-      password: process.env.REDIS_PASSWORD, 
+      password: process.env.REDIS_PASSWORD,
     });
+
+    this.client.on("connect", () => {
+      console.log("Successfully connected to Redis in QueueWorker");
+    });
+
     this.emailService = new EmailNotifier();
     this.processEmailQueue = this.processEmailQueue.bind(this);
     this.client.connect();
@@ -34,7 +39,7 @@ export class QueueWorker {
           const notificationData = emailNotification.element;
 
           const notification: EmailNotification = JSON.parse(notificationData);
-            console.log(notification)
+          console.log(notification);
           await this.emailService.sendEmail({
             message: notification.message,
             email: notification.email,

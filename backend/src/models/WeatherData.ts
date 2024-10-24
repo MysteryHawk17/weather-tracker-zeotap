@@ -12,6 +12,8 @@ export interface IWeatherData extends Document {
     description: string;
     icon: string;
   }>;
+  windSpeed: number;
+  visibility: number;
   createdAt: Date;
 }
 
@@ -21,6 +23,8 @@ const WeatherDataSchema: Schema = new Schema<IWeatherData>({
   feelsLike: { type: Number, required: true },
   pressure: { type: Number, required: true },
   humidity: { type: Number, required: true },
+  windSpeed: { type: Number, required: true },
+  visibility: { type: Number, required: true },
   weatherCondition: [
     {
       id: { type: Number, required: true },
