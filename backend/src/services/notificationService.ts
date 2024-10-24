@@ -45,7 +45,7 @@ export class TemperatureNotifier {
           const notification: EmailNotification = {
             userId: user.id,
             email: user.notificationContact.email,
-            message: `The current temperature is ${currentTemperature}°C, which triggers the threshold.`,
+            message: `The current temperature is ${currentTemperature}°${user.preferredTemperatureUnit}, which triggers the threshold.`,
           };
           this.pushNotification(notification);
           const newNotification = new Notification({
